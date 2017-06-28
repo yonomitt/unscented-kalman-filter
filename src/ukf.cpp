@@ -51,6 +51,24 @@ UKF::UKF() {
 
   Hint: one or more values initialized above might be wildly off...
   */
+
+  // initially set to false, set to true in first call of ProcessMeasurement
+  is_initialized_ = false;
+
+  // State dimension
+  n_x_ = 5;
+
+  // Augmented state dimension
+  n_aug_ = 7;
+
+  // predicted sigma points matrix
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+
+  // Weights of sigma points
+  weights_ = VectorXd(2 * n_aug_ + 1);
+
+  // time when the state is true, in us
+  time_us_ = 0;
 }
 
 UKF::~UKF() {}
