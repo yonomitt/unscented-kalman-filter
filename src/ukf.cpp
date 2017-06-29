@@ -61,6 +61,9 @@ UKF::UKF() {
   // Augmented state dimension
   n_aug_ = 7;
 
+  // Set lambda
+  lambda_ = 3 - n_aug_;
+
   // predicted sigma points matrix
   Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
 
@@ -157,13 +160,42 @@ void UKF::Prediction(double delta_t) {
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
   */
 
-  // Step 1: Generate sigma points
+  //
+  // Step 1: Generate augmented sigma points
+  //
 
-  // Step 2: Augment sigma points
+  // Create augmented mean vector
+  VectorXd x_aug = VectorXd(n_aug_);
 
-  // Step 3: Predict sigma points
+  // Create augmented state covariance
+  MatrixXd P_aug = MatrixXd(n_aug_, n_aug_);
 
-  // Step 4: Predict mean and covariance
+  // Create sigma point matrix
+  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+
+  // Create augmented mean state
+  x_aug << x_, 0, 0;
+
+  // Create augmented covariance matrix
+  P_aug.block(0, 0, n_x_, n_x_) = P_;
+  P_aug(n_x_, n_x_) = std_a_ * std_a_;
+  P_aug(n_x_ + 1, n_x_ + 1) = std_yawdd_ * std_yawdd_;
+
+  // Create square root matrix
+  MatrixXd A_aug = P_aug.llt().matrixL();
+
+  // Create augmented sigma points
+  Xsig_aug.col(0) = x_aug;
+
+  MatrixXd X_aug = x_aug.rowwise().replicate(n_aug_);
+
+  Xsig_aug.block(0, 1, n_aug_, n_aug_) = X_aug + sqrt(lambda_ + n_aug_) * A_aug;
+  Xsig_aug.block(0, 1 + n_aug_, n_aug_, n_aug_) = X_aug - sqrt(lambda_ + n_aug_) * A_aug;
+
+
+  // Step 2: Predict sigma points
+
+  // Step 3: Predict mean and covariance
 
 }
 
