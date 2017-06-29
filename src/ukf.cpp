@@ -305,7 +305,61 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   You'll also need to calculate the radar NIS.
   */
 
+  //
   // Step 1: Predict measurement
+  //
+
+  // Set measurement dimension, radar can measure r, phi, and r_dot
+  int n_z = 3;
+
+  // Create matrix for sigma points in measurement space
+  MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
+
+  // Mean predicted measurement
+  VectorXd z_pred = VectorXd(n_z);
+
+  // Measurement covariance matrix S
+  MatrixXd S = MatrixXd(n_z, n_z);
+
+  int n_sigma = Xsig_pred_.cols();
+
+  // Transform sigma points into measurement space
+  for (int i = 0; i < n_sigma; i++)
+  {
+    double px = Xsig_pred_(0, i);
+    double py = Xsig_pred_(1, i);
+    double v = Xsig_pred_(2, i);
+    double psi = Xsig_pred_(3, i);
+    double psi_dot = Xsig_pred_(4, i);
+
+    double ro = sqrt(px * px + py * py);
+    double phi = (fabs(px) < 0.0001) ? 0.0 : atan2(py, px);
+    double ro_dot = (fabs(ro) < 0.0001) ? 0.0 : (px * v * cos(psi) + py * v * sin(psi)) / ro;
+
+    Zsig.col(i) << ro,
+                   phi,
+                   ro_dot;
+  }
+
+  // Calculate mean predicted measurement
+  for (int i = 0; i < n_sigma; i++)
+  {
+    z_pred += weights_(i) * Zsig.col(i);
+  }
+
+  // Calculate measurement covariance matrix S
+  MatrixXd R = MatrixXd(n_z, n_z);
+  R << std_radr_ * std_radr_, 0,                         0,
+       0,                     std_radphi_ * std_radphi_, 0,
+       0,                     0,                         std_radrd_ * std_radrd_;
+
+  S = R;
+
+  for (int i = 0; i < n_sigma; i++)
+  {
+    S += weights_(i) * (Zsig.col(i) - z_pred) * (Zsig.col(i) - z_pred).transpose();
+  }
+
 
   // Step 2: Update state
 }
