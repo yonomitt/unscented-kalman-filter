@@ -159,6 +159,15 @@ void UKF::Prediction(double delta_t) {
   Complete this function! Estimate the object's location. Modify the state
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
   */
+
+  // Step 1: Generate sigma points
+
+  // Step 2: Augment sigma points
+
+  // Step 3: Predict sigma points
+
+  // Step 4: Predict mean and covariance
+
 }
 
 /**
