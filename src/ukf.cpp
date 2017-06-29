@@ -247,7 +247,7 @@ void UKF::Prediction(double delta_t) {
 
     // Update the delta_x vector for the equations used to
     // avoid dividing by zero
-    if (psi_dot == 0)
+    if (fabs(psi_dot) < 0.001)
     {
       // simplified equations
       delta_x(0) = v * cos(psi) * delta_t;
