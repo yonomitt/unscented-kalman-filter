@@ -311,6 +311,82 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the lidar NIS.
   */
+
+  //
+  // Step 1: Predict measurement
+  //
+
+  // Set measurement dimension, radar can measure r, phi, and r_dot
+  int n_z = 2;
+
+  int n_sigma = Xsig_pred_.cols();
+
+  // Create matrix for sigma points in measurement space
+  MatrixXd Zsig = MatrixXd(n_z, n_sigma);
+
+  // Mean predicted measurement
+  VectorXd z_pred = VectorXd::Zero(n_z);
+
+  // Measurement covariance matrix S
+  MatrixXd S = MatrixXd(n_z, n_z);
+
+  // Transform sigma points into measurement space
+  for (int i = 0; i < n_sigma; i++)
+  {
+    double px = Xsig_pred_(0, i);
+    double py = Xsig_pred_(1, i);
+
+    Zsig.col(i) << px,
+                   py;
+  }
+
+  // Calculate mean predicted measurement
+  for (int i = 0; i < n_sigma; i++)
+  {
+    z_pred += weights_(i) * Zsig.col(i);
+  }
+
+  // Calculate measurement covariance matrix S
+  MatrixXd R = MatrixXd(n_z, n_z);
+  R << std_laspx_ * std_laspx_, 0,
+       0,                       std_laspy_ * std_laspy_;
+
+  S = R;
+
+  for (int i = 0; i < n_sigma; i++)
+  {
+    VectorXd delta_z = Zsig.col(i) - z_pred;
+    S += weights_(i) * delta_z * delta_z.transpose();
+  }
+
+  //
+  // Step 2: Update state
+  //
+
+  // Set z to the raw measurements
+  VectorXd z = meas_package.raw_measurements_;
+
+  // Create matrix for cross correlation Tc
+  MatrixXd Tc = MatrixXd::Zero(n_x_, n_z);
+
+  // Calculate cross correlation matrix
+  for (int i = 0; i < n_sigma; i++)
+  {
+    VectorXd delta_x = Xsig_pred_.col(i) - x_;
+    delta_x(3) = centerAngle(delta_x(3));
+
+    VectorXd delta_z = Zsig.col(i) - z_pred;
+
+    Tc += weights_(i) * delta_x * delta_z.transpose();
+  }
+
+  // Calculate Kalman gain K;
+  MatrixXd K = Tc * S.inverse();
+
+  // Update state mean and covariance matrix
+  VectorXd delta_z = z - z_pred;
+  x_ = x_ + K * delta_z;
+  P_ = P_ - K * S * K.transpose();
 }
 
 /**
