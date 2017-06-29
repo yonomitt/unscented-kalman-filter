@@ -304,4 +304,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the radar NIS.
   */
+
+  // Step 1: Predict measurement
+
+  // Step 2: Update state
 }
