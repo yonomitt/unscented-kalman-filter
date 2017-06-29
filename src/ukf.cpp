@@ -219,15 +219,15 @@ void UKF::Prediction(double delta_t) {
   // Loop over each augmented sigma point
   for (int i = 0; i < Xsig_aug.cols(); i++)
   {
-    VectorXd x_aug = Xsig_aug.col(i);
+    VectorXd sigma_point = Xsig_aug.col(i);
 
-    double px = x_aug(0);
-    double py = x_aug(1);
-    double v = x_aug(2);
-    double psi = x_aug(3);
-    double psi_dot = x_aug(4);
-    double nu_a = x_aug(5);
-    double nu_psi_dd = x_aug(6);
+    double px = sigma_point(0);
+    double py = sigma_point(1);
+    double v = sigma_point(2);
+    double psi = sigma_point(3);
+    double psi_dot = sigma_point(4);
+    double nu_a = sigma_point(5);
+    double nu_psi_dd = sigma_point(6);
 
     // Calculate the noise vector
     VectorXd noise = VectorXd(n_x_);
@@ -260,8 +260,8 @@ void UKF::Prediction(double delta_t) {
       delta_x(1) = (v / psi_dot) * (-cos(psi + psi_dot * delta_t) + cos(psi));
     }
 
-    VectorXd x_k_plus_1 = x_aug.head(n_x_) + delta_x + noise;
-
+    VectorXd x_k_plus_1 = sigma_point.head(n_x_) + delta_x + noise;
+    
     Xsig_pred_.block(0, i, n_x_, 1) = x_k_plus_1;
   }
 
