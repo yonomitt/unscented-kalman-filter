@@ -280,6 +280,9 @@ void UKF::Prediction(double delta_t) {
     weights_(i) = 1 / (2 * l_plus_na);
   }
 
+  x_.fill(0);
+  P_.fill(0);
+
   // Predict state mean
   for (int i = 0; i < n_sigma; i++)
   {
