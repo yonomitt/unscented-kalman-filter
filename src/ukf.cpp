@@ -65,10 +65,10 @@ UKF::UKF() {
   lambda_ = 3 - n_aug_;
 
   // predicted sigma points matrix
-  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  Xsig_pred_ = MatrixXd::Zero(n_x_, 2 * n_aug_ + 1);
 
   // Weights of sigma points
-  weights_ = VectorXd(2 * n_aug_ + 1);
+  weights_ = VectorXd::Zero(2 * n_aug_ + 1);
 
   // time when the state is true, in us
   time_us_ = 0;
@@ -178,8 +178,8 @@ void UKF::Prediction(double delta_t) {
 
   // Create augmented covariance matrix
   P_aug.block(0, 0, n_x_, n_x_) = P_;
-  P_aug(n_x_, n_x_) = std_a_ * std_a_;
-  P_aug(n_x_ + 1, n_x_ + 1) = std_yawdd_ * std_yawdd_;
+  P_aug.block(n_x_, n_x_, 2, 2) << std_a_ * std_a_,                       0,
+                                                 0, std_yawdd_ * std_yawdd_;
 
   // Create square root matrix
   MatrixXd A_aug = P_aug.llt().matrixL();
@@ -316,7 +316,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
 
   // Mean predicted measurement
-  VectorXd z_pred = VectorXd(n_z);
+  VectorXd z_pred = VectorXd::Zero(n_z);
 
   // Measurement covariance matrix S
   MatrixXd S = MatrixXd(n_z, n_z);
@@ -368,7 +368,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   VectorXd z = meas_package.raw_measurements_;
 
   // Create matrix for cross correlation Tc
-  MatrixXd Tc = MatrixXd(n_x_, n_z);
+  MatrixXd Tc = MatrixXd::Zero(n_x_, n_z);
 
   // Calculate cross correlation matrix
   for (int i = 0; i < n_sigma; i++)
