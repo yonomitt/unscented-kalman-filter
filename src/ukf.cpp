@@ -7,6 +7,24 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
+
+// Helper function to center the angle between -pi and pi
+float centerAngle(float phi) {
+  // if phi is too big, bring it down 2pi at a time
+  while (phi > M_PI) {
+    phi -= 2 * M_PI;
+  }
+
+  // if phi is too small, bring it up 2pi at a time
+  while (phi < -M_PI) {
+    phi += 2 * M_PI;
+  }
+
+  // return the new phi that is between -pi and pi
+  return phi;
+}
+
+
 /**
  * Initializes Unscented Kalman filter
  */
@@ -272,7 +290,9 @@ void UKF::Prediction(double delta_t) {
   // Predict state covariance matrix
   for (int i = 0; i < n_sigma; i++)
   {
-    P_ += weights_(i) * (Xsig_pred_.col(i) - x_) * (Xsig_pred_.col(i) - x_).transpose();
+    VectorXd delta_x = Xsig_pred_.col(i) - x_;
+    delta_x(3) = centerAngle(delta_x(3));
+    P_ += weights_(i) * delta_x * delta_x.transpose();
   }
 }
 
@@ -357,7 +377,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   for (int i = 0; i < n_sigma; i++)
   {
-    S += weights_(i) * (Zsig.col(i) - z_pred) * (Zsig.col(i) - z_pred).transpose();
+    VectorXd delta_z = Zsig.col(i) - z_pred;
+    delta_z(1) = centerAngle(delta_z(1));
+    S += weights_(i) * delta_z * delta_z.transpose();
   }
 
   //
@@ -373,13 +395,21 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   // Calculate cross correlation matrix
   for (int i = 0; i < n_sigma; i++)
   {
-    Tc += weights_(i) * (Xsig_pred_.col(i) - x_) * (Zsig.col(i) - z_pred).transpose();
+    VectorXd delta_x = Xsig_pred_.col(i) - x_;
+    delta_x(3) = centerAngle(delta_x(3));
+
+    VectorXd delta_z = Zsig.col(i) - z_pred;
+    delta_z(1) = centerAngle(delta_z(1));
+
+    Tc += weights_(i) * delta_x * delta_z.transpose();
   }
 
   // Calculate Kalman gain K;
   MatrixXd K = Tc * S.inverse();
 
   // Update state mean and covariance matrix
-  x_ = x_ + K * (z - z_pred);
+  VectorXd delta_z = z - z_pred;
+  delta_z(1) = centerAngle(delta_z(1));
+  x_ = x_ + K * delta_z;
   P_ = P_ - K * S * K.transpose();
 }
