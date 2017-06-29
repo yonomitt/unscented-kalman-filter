@@ -360,6 +360,26 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     S += weights_(i) * (Zsig.col(i) - z_pred) * (Zsig.col(i) - z_pred).transpose();
   }
 
-
+  //
   // Step 2: Update state
+  //
+
+  // Set z to the raw measurements
+  VectorXd z = meas_package.raw_measurements_;
+
+  // Create matrix for cross correlation Tc
+  MatrixXd Tc = MatrixXd(n_x_, n_z);
+
+  // Calculate cross correlation matrix
+  for (int i = 0; i < n_sigma; i++)
+  {
+    Tc += weights_(i) * (Xsig_pred_.col(i) - x_) * (Zsig.col(i) - z_pred).transpose();
+  }
+
+  // Calculate Kalman gain K;
+  MatrixXd K = Tc * S.inverse();
+
+  // Update state mean and covariance matrix
+  x_ = x_ + K * (z - z_pred);
+  P_ = P_ - K * S * K.transpose();
 }
