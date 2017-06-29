@@ -192,8 +192,61 @@ void UKF::Prediction(double delta_t) {
   Xsig_aug.block(0, 1, n_aug_, n_aug_) = X_aug + sqrt(lambda_ + n_aug_) * A_aug;
   Xsig_aug.block(0, 1 + n_aug_, n_aug_, n_aug_) = X_aug - sqrt(lambda_ + n_aug_) * A_aug;
 
-
+  //
   // Step 2: Predict sigma points
+  //
+
+  // Calcualte half of delta_t squared
+  double half_dt2 = 0.5 * delta_t * delta_t;
+
+  // Loop over each augmented sigma point
+  for (int i = 0; i < Xsig_aug.cols(); i++)
+  {
+    VectorXd x_aug = Xsig_aug.col(i);
+
+    double px = x_aug(0);
+    double py = x_aug(1);
+    double v = x_aug(2);
+    double psi = x_aug(3);
+    double psi_dot = x_aug(4);
+    double nu_a = x_aug(5);
+    double nu_psi_dd = x_aug(6);
+
+    // Calculate the noise vector
+    VectorXd noise = VectorXd(n_x_);
+    noise << half_dt2 * cos(psi) * nu_a,
+             half_dt2 * sin(psi) * nu_a,
+             delta_t * nu_a,
+             half_dt2 * nu_psi_dd,
+             delta_t * nu_psi_dd;
+
+    // Initialize the common part of the delta vector
+    VectorXd delta_x = VectorXd(n_x_);
+    delta_x << 0,
+               0,
+               0,
+               psi_dot * delta_t,
+               0;
+
+    // Update the delta_x vector for the equations used to
+    // avoid dividing by zero
+    if (psi_dot == 0)
+    {
+      // simplified equations
+      delta_x(0) = v * cos(psi) * delta_t;
+      delta_x(1) = v * sin(psi) * delta_t;
+    }
+    else
+    {
+      // more complex update equations
+      delta_x(0) = (v / psi_dot) * (sin(psi + psi_dot * delta_t) - sin(psi));
+      delta_x(1) = (v / psi_dot) * (-cos(psi + psi_dot * delta_t) + cos(psi));
+    }
+
+    VectorXd x_k_plus_1 = x_aug.head(n_x_) + delta_x + noise;
+
+    Xsig_pred_.block(0, i, n_x_, 1) = x_k_plus_1;
+  }
 
   // Step 3: Predict mean and covariance
 
