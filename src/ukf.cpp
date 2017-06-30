@@ -445,7 +445,6 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     z_pred += weights_(i) * Zsig.col(i);
   }
 
-  // Calculate measurement covariance matrix S
   MatrixXd R = MatrixXd(n_z, n_z);
   R << std_radr_ * std_radr_, 0,                         0,
        0,                     std_radphi_ * std_radphi_, 0,
@@ -453,23 +452,13 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   S = R;
 
-  for (int i = 0; i < n_sigma_; i++)
-  {
-    VectorXd delta_z = Zsig.col(i) - z_pred;
-    delta_z(1) = centerAngle(delta_z(1));
-    S += weights_(i) * delta_z * delta_z.transpose();
-  }
-
-  //
-  // Step 2: Update state
-  //
-
   // Set z to the raw measurements
   VectorXd z = meas_package.raw_measurements_;
 
   // Create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd::Zero(n_x_, n_z);
 
+  // Calculate measurement covariance matrix S
   // Calculate cross correlation matrix
   for (int i = 0; i < n_sigma_; i++)
   {
@@ -479,8 +468,13 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     VectorXd delta_z = Zsig.col(i) - z_pred;
     delta_z(1) = centerAngle(delta_z(1));
 
+    S += weights_(i) * delta_z * delta_z.transpose();
     Tc += weights_(i) * delta_x * delta_z.transpose();
   }
+
+  //
+  // Step 2: Update state
+  //
 
   // Calculate Kalman gain K;
   MatrixXd K = Tc * S.inverse();
