@@ -91,6 +91,16 @@ UKF::UKF() {
   // Weights of sigma points
   weights_ = VectorXd::Zero(n_sigma_);
 
+  // Set weights vector
+  double l_plus_na = lambda_ + n_aug_;
+
+  weights_(0) = lambda_ / l_plus_na;
+
+  for (int i = 1; i < n_sigma_; i++)
+  {
+    weights_(i) = 1 / (2 * l_plus_na);
+  }
+
   // time when the state is true, in us
   time_us_ = 0;
 }
@@ -277,16 +287,6 @@ void UKF::Prediction(double delta_t) {
   //
   // Step 3: Predict mean and covariance
   //
-
-  // Set weights vector
-  double l_plus_na = lambda_ + n_aug_;
-
-  weights_(0) = lambda_ / l_plus_na;
-
-  for (int i = 1; i < n_sigma_; i++)
-  {
-    weights_(i) = 1 / (2 * l_plus_na);
-  }
 
   x_.fill(0);
   P_.fill(0);
