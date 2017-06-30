@@ -67,6 +67,8 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* Number of sigma points
+  int n_sigma_;
 
   /**
    * Constructor
